@@ -6,7 +6,6 @@ class Item {
   String title;
   String description;
   String price;
-  // Add any other propercentties you need
 
   Item({
     required this.percent,
@@ -63,14 +62,18 @@ List<Item> itemList = [
   ),
   Item(
     percent: '20%',
-    image: Image.asset('assets/S7.jpg'),
+    image: Image.asset(
+      'assets/S7.jpg',
+    ),
     title: 'girl dress',
     description: 'New Fashion ',
     price: 'RS: 3000',
   ),
   Item(
-    percent: '10%',
-    image: Image.asset('assets/S7.jpeg'),
+    percent: '25%',
+    image: Image.asset(
+      'assets/S8.jpeg',
+    ),
     title: 'girl dress',
     description: 'New Fashion ',
     price: 'RS: 4000',

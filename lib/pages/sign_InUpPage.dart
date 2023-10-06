@@ -12,11 +12,9 @@ class sign_InUpPage extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Container(
-            child: const Text(
-              'Hello There!',
-              style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
-            ),
+          const Text(
+            'Hello There!',
+            style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
           ),
           const SizedBox(
             height: 5,
@@ -24,8 +22,9 @@ class sign_InUpPage extends StatelessWidget {
           const Text(
               'Automatic identity varification which enable you to\n                           verify your identity'),
           Image.asset('assets/signup.jpg'),
+          SizedBox(height: 10,),
           SizedBox(
-            height: 50,
+            height: 40,
             width: 320,
             child: ElevatedButton(
               onPressed: () {
@@ -50,7 +49,7 @@ class sign_InUpPage extends StatelessWidget {
             height: 20,
           ),
           SizedBox(
-            height: 50,
+            height: 40,
             width: 320,
             child: ElevatedButton(
               onPressed: () {
@@ -71,6 +70,35 @@ class sign_InUpPage extends StatelessWidget {
               ),
             ),
           ),
+          /*SizedBox(
+            height: 50,
+            width: 320,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const MyHomePage()));
+              },
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  )),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.connect_without_contact_outlined,size: 20,color: Colors.black,),
+                  SizedBox(width: 5,),
+                  Text(
+                    'Use Without an Account',
+                    style: TextStyle(fontSize: 15,color: Colors.black),
+                  ),
+                ],
+              )
+            ),
+          ),*/
         ]),
       ),
     ));

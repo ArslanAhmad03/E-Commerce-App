@@ -1,5 +1,6 @@
 // ignore: file_names
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shop/custom/const.dart';
 import 'package:shop/pages/DetailPage.dart';
@@ -15,80 +16,83 @@ class _ItemsWidgetState extends State<ItemsWidget> {
   static const TextStyle _textStyle = TextStyle(
       fontSize: 12, color: Colors.purple, fontWeight: FontWeight.bold);
 
+  List<Map<String, dynamic>> _product = [];
+
+  getProduct() async {
+    QuerySnapshot qn =
+        await FirebaseFirestore.instance.collection('Images').get();
+    setState(() {
+      for (int i = 0; i < qn.docs.length; i++) {
+        _product.add({
+          'title': qn.docs[i]['title'],
+          'description': qn.docs[i]['description'],
+          'price': qn.docs[i]['price'],
+          "urls": qn.docs[i]["urls"],
+        });
+        print('............//${_product[i]['title']}');
+        print('............//${_product[i]['description']}');
+        print('............//${_product[i]['price']}');
+        print('............//${_product[i]['urls']}');
+      }
+    });
+  }
+
   @override
+  void initState() {
+    super.initState();
+    getProduct();
+  }
+
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: SizedBox(
         height: 500,
-        child: GridView.count(
-          scrollDirection: Axis.vertical,
-          crossAxisCount: 2,
-          children: List.generate(itemList.length, (index) {
-            final item = itemList[index];
-            return GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => DetailPage(item: item),
+        child: Scaffold(
+            body: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance.collection('Images').snapshots(),
+              builder: (context, snap) {
+                if (!snap.hasData) {
+                  return Center(child: Text('Loading...'));
+                }
+                var latestData = snap.data?.docs.last;
+                return GridView.builder(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2, // Set the number of columns here
+                    crossAxisSpacing: 5,
+                    mainAxisSpacing: 5,
                   ),
+                  itemCount: _product.length,
+                  itemBuilder: (context, index) {
+                    return GestureDetector(
+                      onTap: (){
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => DetailPage(product: _product[index])));
+                        print('press card page');
+                      },
+                      child: Card(
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: Image.network(
+                                _product[index]['urls'][0],
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            ListTile(
+                              title: Text(_product[index]['title']),
+                              subtitle: Text(_product[index]['description']),
+                              trailing: Text(
+                                '${_product[index]['price']}',
+                                style: _textStyle,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
-              child: Padding(
-                padding: const EdgeInsets.only(left: 2, right: 2),
-                child: Card(
-                  elevation: 5,
-                  color: Colors.grey.shade100,
-                  borderOnForeground: true,
-                  shadowColor: Colors.purple,
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          margin: const EdgeInsets.only(
-                              left: 3, top: 3, right: 130),
-                          decoration: BoxDecoration(
-                              color: Colors.grey.shade400,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.purple)),
-                          child: Text(
-                            item.percent,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black),
-                          ),
-                        ),
-                        //
-                        SizedBox(height: 60, child: item.image),
-                        //
-                        Padding(
-                          padding: const EdgeInsets.all(5.0),
-                          child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item.title,
-                                  style: _textStyle,
-                                ),
-                                Text(
-                                  item.description,
-                                  style: const TextStyle(
-                                      fontSize: 10, color: Colors.purple),
-                                ),
-                                Text(
-                                  item.price,
-                                  style: _textStyle,
-                                ),
-                              ]),
-                        ),
-                      ]),
-                ),
-              ),
-            );
-          }),
+            )
         ),
       ),
     );

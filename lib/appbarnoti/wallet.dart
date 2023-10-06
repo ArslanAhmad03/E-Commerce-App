@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shop/Drawer/MyAcc.dart';
+import 'package:shop/Drawer/chatScreen.dart';
+import 'package:shop/appbarnoti/needhelp.dart';
 import 'package:shop/main_screen.dart';
 
 class wallet extends StatefulWidget {
@@ -15,20 +17,15 @@ class wallet extends StatefulWidget {
 }
 
 class _walletState extends State<wallet> {
-  static List<String> items = <String>[
-    'All Transection',
-    'Complete',
+
+  String? _selectedItem;
+
+  List<String> _items = [
+    'All Transections',
+    'Completed',
     'Pending',
     'Cancel',
   ];
-  String? value;
-  String dropdownValue = items.first;
-
-  DropdownMenuItem<String> buildMenuItem(String item) => DropdownMenuItem(
-        value: item,
-        child: Text(item),
-      );
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,7 +38,8 @@ class _walletState extends State<wallet> {
           style: wallet._textStyle,
         ),
         actions: [
-          PopupMenuButton(itemBuilder: (context) {
+          PopupMenuButton(
+              itemBuilder: (context) {
             return [
               PopupMenuItem(
                 //value: 1,
@@ -61,7 +59,9 @@ class _walletState extends State<wallet> {
               PopupMenuItem(
                 //value: 1,
                 child: TextButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    /// to chat page
+                  },
                   child: const Text(
                     "Messages",
                     style: wallet._textColor,
@@ -83,7 +83,10 @@ class _walletState extends State<wallet> {
               PopupMenuItem(
                 //value: 1,
                 child: TextButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => const needHelp()));
+                  },
                   child: const Text(
                     "Need Help?",
                     style: wallet._textColor,
@@ -222,19 +225,23 @@ class _walletState extends State<wallet> {
           ),
           Padding(
               padding: EdgeInsets.all(10.0),
-              child: DropdownButton<String>(
-                  value: dropdownValue,
+              child: DropdownButton(
+                  value: _selectedItem,
                   isExpanded: true,
-                  elevation: 0,
-                  items: items.map(buildMenuItem).toList(),
-                  onChanged: (index) {
-                    value = index;
-                  })
-
-              /*Text(
-              'All Transections',
-              style: TextStyle(fontSize: 15),
-            ),*/
+                  borderRadius: BorderRadius.circular(10),
+                  elevation: 8,
+                  items: _items.map((String item) {
+                    return DropdownMenuItem(
+                      value: item,
+                      child: Text(item),
+                    );
+                  }).toList(),
+                onChanged: (String? selectedItem){
+                    setState(() {
+                      _selectedItem = selectedItem;
+                    });
+                },
+              ),
               ),
           const SizedBox(
             height: 20,

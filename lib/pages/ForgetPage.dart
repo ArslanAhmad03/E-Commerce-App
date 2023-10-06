@@ -1,8 +1,18 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
-class ForgetPage extends StatelessWidget {
+class ForgetPage extends StatefulWidget {
   const ForgetPage({super.key});
 
+  @override
+  State<ForgetPage> createState() => _ForgetPageState();
+}
+
+class _ForgetPageState extends State<ForgetPage> {
+
+  bool _emailvaliid = false;
+  final emailController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -20,6 +30,15 @@ class ForgetPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              const SizedBox(
+                height: 50,
+                width: double.infinity,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 80),
+                  child: Text("Reset Password",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 20),),
+                ),
+              ),
+
               const Text('   Email'),
               const SizedBox(
                 height: 5,
@@ -27,8 +46,10 @@ class ForgetPage extends StatelessWidget {
               SizedBox(
                 height: 50,
                 width: 320,
-                child: TextFormField(
+                child: TextField(
+                  controller: emailController,
                   decoration: InputDecoration(
+                    errorText: _emailvaliid ? 'email required': null,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -46,7 +67,36 @@ class ForgetPage extends StatelessWidget {
                 height: 40,
                 width: 320,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () async {
+                    ///
+                    try {
+                      FirebaseAuth.instance.sendPasswordResetEmail(
+                        email: emailController.text,
+                      );
+                      if (emailController.text.isEmpty) {
+                        Fluttertoast.showToast(msg: 'email required',
+                            toastLength: Toast.LENGTH_SHORT,
+                            gravity: ToastGravity.BOTTOM);
+                      }
+                      else {
+                        Fluttertoast.showToast(msg: 'your request sent',
+                            toastLength: Toast.LENGTH_SHORT,
+                            gravity: ToastGravity.BOTTOM);
+                      }
+                    }on FirebaseAuthException catch (e){
+                      print(e.code);
+                      if (e.code == 'user-not-found') {
+                        Fluttertoast.showToast(
+                            msg: 'Enter your registered email id',
+                            toastLength: Toast.LENGTH_SHORT,
+                            gravity: ToastGravity.BOTTOM);
+                        //print('The account does not exist');
+                      }
+                      setState(() {
+                        _emailvaliid = false;
+                      });
+                    };
+                  },
                   style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.purple,
                       elevation: 8,

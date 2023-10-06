@@ -1,27 +1,71 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
-class MYdialog extends StatelessWidget {
+class MYdialog extends StatefulWidget {
   const MYdialog({super.key});
 
-  static const TextStyle _textStyle =
-      TextStyle(color: Colors.black, fontSize: 20);
+  @override
+  State<MYdialog> createState() => _MYdialogState();
+}
+
+class _MYdialogState extends State<MYdialog> {
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
+
+  Future<void> _getUserData() async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(FirebaseAuth.instance.currentUser!.email)
+          .get()
+          .then(
+        (DocumentSnapshot userDoc) {
+          if (userDoc.exists) {
+            final userData = userDoc.data() as Map<String, dynamic>;
+            setState(() {
+              nameController.text = userData['name'];
+              emailController.text = userData['email'];
+            });
+          }
+        },
+      );
+    } on FirebaseAuthException catch (e) {
+      print(e.code);
+      if (e.code == 'path.isNotEmpty') {
+        Fluttertoast.showToast(
+            msg: 'a document path must be a non-empty string',
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM);
+      }
+    }
+  }
 
   @override
+  void initState() {
+    super.initState();
+    _getUserData();
+  }
+
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.all(10),
       margin: const EdgeInsets.only(left: 25, right: 25, top: 235, bottom: 235),
       decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all()),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(padding: EdgeInsets.only(left: 10, right: 10)),
-          const Text(
-            'Profile',
-            style: _textStyle,
+          const SizedBox(
+            height: 30,
+            child: Text(
+              'Profile',
+              style: TextStyle(color: Colors.black, fontSize: 20),
+            ),
           ),
           const SizedBox(
             height: 20,
@@ -29,7 +73,7 @@ class MYdialog extends StatelessWidget {
           Material(
             child: Column(
               children: [
-                const Row(
+                Row(
                   children: [
                     Text('Name : ',
                         style: TextStyle(
@@ -38,7 +82,8 @@ class MYdialog extends StatelessWidget {
                       height: 30,
                       width: 200,
                       child: TextField(
-                        style: TextStyle(),
+                        controller: nameController,
+                        readOnly: true,
                       ),
                     )
                   ],
@@ -46,7 +91,7 @@ class MYdialog extends StatelessWidget {
                 const SizedBox(
                   height: 25,
                 ),
-                const Row(
+                Row(
                   children: [
                     Text('Email : ',
                         style: TextStyle(
@@ -54,7 +99,10 @@ class MYdialog extends StatelessWidget {
                     SizedBox(
                       height: 30,
                       width: 200,
-                      child: TextField(),
+                      child: TextField(
+                        controller: emailController,
+                        readOnly: true,
+                      ),
                     ),
                   ],
                 ),

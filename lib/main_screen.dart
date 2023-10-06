@@ -2,6 +2,7 @@ import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:shop/pages/CartPage.dart';
 import 'package:shop/pages/HomePage.dart';
+import 'package:shop/pages/addProduct.dart';
 import 'package:shop/pages/sevicesPage.dart';
 import 'package:shop/pages/accPage.dart';
 
@@ -17,6 +18,7 @@ class _MyHomePageState extends State<MyHomePage> {
   static List Screen = [
     const HomePage(),
     const CartPage(),
+    const addProduct(),
     const sevicesPage(),
     const accPage(),
   ];
@@ -48,6 +50,11 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             Icon(
               Icons.shopping_cart,
+              size: 30,
+              color: Colors.white,
+            ),
+            Icon(
+              Icons.add,
               size: 30,
               color: Colors.white,
             ),

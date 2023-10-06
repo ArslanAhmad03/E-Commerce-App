@@ -1,13 +1,119 @@
 // ignore: file_names
 // ignore: file_names
+
+import 'dart:io';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:optimized_cached_image/optimized_cached_image.dart';
 import 'package:shop/pages/settingPage.dart';
+import 'package:path/path.dart' as path;
 
 // ignore: camel_case_types
-class accPage extends StatelessWidget {
+class accPage extends StatefulWidget {
   const accPage({super.key});
 
   @override
+  State<accPage> createState() => _accPageState();
+}
+
+class _accPageState extends State<accPage> {
+  final nameController = TextEditingController();
+  final phoneController = TextEditingController();
+  final emailController = TextEditingController();
+  final imageUrlController = TextEditingController();
+
+  XFile? image;
+  final ImagePicker _picker = ImagePicker();
+  final FirebaseStorage _storage = FirebaseStorage.instance;
+
+  Future<void> _getImage(ImageSource source) async {
+    final photo = await _picker.pickImage(source: source);
+    if (photo != null) {
+      setState(() {
+        image = photo;
+      });
+      await _uploadImage();
+    }
+  }
+
+  Future<void> _uploadImage() async {
+    final file = File(image!.path);
+    final filename = path.basename(file.path);
+    final ref = _storage.ref().child(filename);
+    final uploadTask = ref.putFile(file);
+
+    await uploadTask;
+    final downurl = await ref.getDownloadURL().then((value) {
+      setState(() {
+        imageUrlController.text = value;
+      });
+    });
+
+    ///test
+    print('imageUrl: $imageUrlController');
+  }
+
+  Future<void> _getUserData() async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(FirebaseAuth.instance.currentUser!.email)
+          .get()
+          .then(
+        (DocumentSnapshot userDoc) {
+          if (userDoc.exists) {
+            final userData = userDoc.data() as Map<String, dynamic>;
+            setState(() {
+              nameController.text = userData['name'];
+              phoneController.text = userData['phone'];
+              emailController.text = userData['email'];
+              imageUrlController.text = userData['imageUrl'];
+            });
+          }
+        },
+      );
+    } on FirebaseAuthException catch (e) {
+      print(e.code);
+      if (e.code == 'path.isNotEmpty') {
+        Fluttertoast.showToast(
+            msg: 'a document path must be a non-empty string',
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM);
+      }
+    }
+  }
+
+  Future<void> _updateData() async {
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(FirebaseAuth.instance.currentUser!.email)
+        .update({
+      'name': nameController.text,
+      'phone': phoneController.text,
+      'email': emailController.text,
+      'imageUrl': imageUrlController.text,
+    });
+  }
+
+  void dispose() {
+    nameController.dispose();
+    phoneController.dispose();
+    emailController.dispose();
+    imageUrlController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _getUserData();
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -30,43 +136,116 @@ class accPage extends StatelessWidget {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // -- IMAGE
+              /// -- IMAGE
               Stack(
                 children: [
                   SizedBox(
                     width: 120,
                     height: 120,
-                    child: ClipRRect(
-                        borderRadius: BorderRadius.circular(100),
-                        child: const Image(
-                            image: AssetImage('assets/profile.png'))),
+                    child: ClipOval(
+                      ///
+                      child: OptimizedCacheImage(
+                        imageUrl: imageUrlController.text,
+                        fit: BoxFit.cover,
+                        progressIndicatorBuilder:
+                            (context, url, downloadProgress) =>
+                                CircularProgressIndicator(
+                          value: downloadProgress.progress,
+                        ),
+                      ),
+
+                      ///
+                    ),
                   ),
                   Positioned(
                     bottom: 0,
                     right: 0,
                     child: IconButton(
-                      onPressed: () {},
-                      icon: Icon(
+                      onPressed: () {
+                        showModalBottomSheet(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return Container(
+                                height: 120,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade300,
+                                ),
+                                child: Padding(
+                                    padding: EdgeInsets.all(15.0),
+                                    child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Column(
+                                            children: [
+                                              SizedBox(
+                                                height: 60,
+                                                width: 60,
+                                                child: IconButton(
+                                                  onPressed: () {
+                                                    _getImage(
+                                                        ImageSource.gallery);
+                                                  },
+                                                  icon: Image.asset(
+                                                    'assets/gallery.png',
+                                                  ),
+                                                ),
+                                              ),
+                                              SizedBox(
+                                                height: 5,
+                                              ),
+                                              Text(
+                                                'Gallery',
+                                                style: TextStyle(fontSize: 12),
+                                              ),
+                                            ],
+                                          ),
+                                          SizedBox(
+                                            width: 20,
+                                          ),
+                                          Column(
+                                            children: [
+                                              SizedBox(
+                                                height: 60,
+                                                width: 60,
+                                                child: IconButton(
+                                                  onPressed: () {
+                                                    _getImage(
+                                                        ImageSource.camera);
+                                                  },
+                                                  icon: Image.asset(
+                                                    'assets/camera.png',
+                                                  ),
+                                                ),
+                                              ),
+                                              SizedBox(
+                                                height: 5,
+                                              ),
+                                              Text(
+                                                'Camera',
+                                                style: TextStyle(fontSize: 12),
+                                              ),
+                                            ],
+                                          ),
+                                        ])),
+                              );
+                            });
+                      },
+                      icon: const Icon(
                         Icons.camera_alt,
-                        color: Colors.black,
                       ),
                       splashColor: Colors.purple.shade200,
-                      splashRadius: 15,
+                      splashRadius: 10,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 10),
-              const Text(
-                'name',
+              Text(
+                nameController.text,
+                style: TextStyle(fontSize: 20),
               ),
-              const Text(
-                'subname',
-              ),
-              const SizedBox(height: 20),
-
-              /// -- BUTTON
-              const SizedBox(height: 30),
+              const SizedBox(height: 50),
               const Divider(
                 indent: 30,
                 endIndent: 30,
@@ -77,9 +256,10 @@ class accPage extends StatelessWidget {
               const SizedBox(height: 10),
               //// ---
               SizedBox(
-                height: 45,
+                height: 70,
                 width: 320,
-                child: TextFormField(
+                child: TextField(
+                  controller: nameController,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(20),
@@ -95,9 +275,31 @@ class accPage extends StatelessWidget {
                 height: 15,
               ),
               SizedBox(
-                height: 45,
+                height: 70,
                 width: 320,
-                child: TextFormField(
+                child: TextField(
+                  controller: phoneController,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    labelText: 'phone',
+                    hintText: 'Phone....',
+                    prefixIcon: const Icon(Icons.phone, color: Colors.purple),
+                  ),
+                  keyboardType: TextInputType.number,
+                  maxLength: 11,
+                ),
+              ),
+              const SizedBox(
+                height: 15,
+              ),
+              SizedBox(
+                height: 70,
+                width: 320,
+                child: TextField(
+                  controller: emailController,
+                  readOnly: true,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(20),
@@ -110,39 +312,29 @@ class accPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(
-                height: 15,
-              ),
-              SizedBox(
-                height: 45,
-                width: 320,
-                child: TextFormField(
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    labelText: 'phone',
-                    hintText: 'Phone....',
-                    prefixIcon: const Icon(Icons.phone, color: Colors.purple),
-                  ),
-                  keyboardType: TextInputType.number,
-                ),
-              ),
-              const SizedBox(
                 height: 30,
               ),
               SizedBox(
                 height: 40,
                 width: 320,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    _updateData();
+                    Fluttertoast.showToast(
+                      msg: 'Update your profiel',
+                      toastLength: Toast.LENGTH_SHORT,
+                      gravity: ToastGravity.BOTTOM,
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.purple,
-                      elevation: 8,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      )),
+                    backgroundColor: Colors.purple,
+                    elevation: 8,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
                   child: const Text(
-                    'Edit Profile',
+                    'Update profile',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                 ),

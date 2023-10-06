@@ -1,15 +1,38 @@
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:shop/custom/notificationService.dart';
 import 'package:shop/splashscreen.dart';
 
-void main() {
-  Future.delayed(const Duration(seconds: 40));
-  runApp(const MyApp());
+
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  LocalNotificationManager notificationManager = LocalNotificationManager();
+  await notificationManager.initialize();
+
+  await Firebase.initializeApp();
+
+  FirebaseFirestore.instance.collection('messages').snapshots().listen(
+        (querySnapshot) {
+      for (var change in querySnapshot.docChanges) {
+        if (change.type == DocumentChangeType.added) {
+          String sender = change.doc['sender'];
+          String message = change.doc['text'];
+          notificationManager.showNotification(sender, message);
+          print('/////////////.............////////////');
+          print(sender);
+          print(message);
+          print('/////////////.............////////////');
+        }
+      }
+    },
+  );
+  runApp( MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

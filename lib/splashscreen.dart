@@ -11,29 +11,28 @@ class splashscreen extends StatefulWidget {
 }
 
 class _splashscreenState extends State<splashscreen> {
-  //bool isloading = true;
+
   void initState() {
     super.initState();
     startTimer();
   }
 
   startTimer() async {
-    var duration = Duration(seconds: 5);
+    var duration = Duration(seconds: 4);
     return new Timer(duration, route);
   }
 
   route() {
     Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (context) => sign_InUpPage()));
+        context, MaterialPageRoute(builder: (context) => const sign_InUpPage()));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Colors.purple,
         body: Center(
           child: Image.asset(
-            'assets/Sp3.png',
+            'assets/Sp2.png',
             fit: BoxFit.cover,
           ),
         ));

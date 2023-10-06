@@ -1,123 +1,94 @@
-// ignore: file_names
-import 'package:flutter/cupertino.dart';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
-class CartItemSample extends StatefulWidget {
-  const CartItemSample({super.key});
-
-  static const TextStyle _textStyle = TextStyle(
-      fontSize: 16, fontWeight: FontWeight.bold, color: Colors.purple);
+class no_use_CartAddPage extends StatefulWidget {
+  const no_use_CartAddPage({super.key,});
 
   @override
-  State<CartItemSample> createState() => _CartItemSampleState();
+  State<no_use_CartAddPage> createState() => _no_use_CartAddPageState();
 }
 
-class _CartItemSampleState extends State<CartItemSample> {
-  bool select = false;
-
+class _no_use_CartAddPageState extends State<no_use_CartAddPage> {
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          //for (int i = 0; i < 6; i++)
-          Container(
-            height: 110,
-            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-                color: Colors.grey, borderRadius: BorderRadius.circular(10)),
-            child: Row(
-              children: [
-                Radio(
-                    value: '',
-                    groupValue: '',
-                    activeColor: Colors.purple,
-                    onChanged: (index) {}),
-                Container(
-                  height: 70,
-                  width: 70,
-                  margin: const EdgeInsets.all(10),
-                  child: Image.asset('assets/S6.png'),
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 15),
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Product Title',
-                          style: CartItemSample._textStyle,
-                        ),
-                        Text(
-                          '\$55',
-                          style: CartItemSample._textStyle,
-                        ),
-                      ]),
-                ),
-                const Spacer(),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: Column(
+    return SizedBox(
+      height: 450,
+      child: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('Cart').snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          final CartProducts = snapshot.data?.docs ?? [];
+
+          if (CartProducts.isEmpty) {
+            return Center(
+              child: Text('No Cart products yet.'),
+            );
+          }
+          return ListView.builder(
+            itemCount: CartProducts.length,
+            itemBuilder: (context, index) {
+              final product = CartProducts[index].data() as Map<dynamic, dynamic>?;
+
+              if (product == null) {
+                return ListTile(
+                  title: Text('Product is null'),
+                  subtitle: Text('Description not available'),
+                  trailing: Text('Price N/A'),
+                );
+              } else {
+                return Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Container(
+                    height: 122,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10.0),
+                      border: Border.all(),
+                    ),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Icon(
-                          Icons.delete,
-                          size: 20,
-                          color: Colors.red,
+                        ListTile(
+                          //'https://www.unigreet.com/wp-content/uploads/2022/11/100-very-special-good-morning-images-quotes-photos.jpg'
+                          leading: Image.network(
+                            (product['image_url'] is List && product['image_url'].isNotEmpty)
+                              ? product['image_url'][0].toString()
+                              : 'No Image',
+                          ),
+                          title: Text(product['title'] ?? 'No Title'),
+                          subtitle: Text(product['description'] ?? 'No Description'),
+                          trailing: Text('\$ ${product['price'] ?? 'N/A'}'),
+                          onTap: () {
+                            print('tile press');
+                          },
                         ),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                  color: Colors.white70,
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [
-                                    BoxShadow(
-                                        color: Colors.grey.withOpacity(.3))
-                                  ]),
-                              child: const Icon(
-                                CupertinoIcons.add,
-                                size: 15,
-                              ),
-                            ),
-                            Container(
-                              margin:
-                                  const EdgeInsets.symmetric(horizontal: 10),
-                              child: const Text(
-                                '01',
-                                style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.purple),
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                  color: Colors.white70,
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [
-                                    BoxShadow(
-                                        color: Colors.grey.withOpacity(.3))
-                                  ]),
-                              child: const Icon(
-                                CupertinoIcons.minus,
-                                size: 15,
-                              ),
-                            ),
-                          ],
+                        IconButton(onPressed: (){
+                          _removeFromFavorites(CartProducts[index].reference);
+                        }, icon: Icon(Icons.delete_outline),
                         )
-                      ]),
-                )
-              ],
-            ),
-          ),
-        ],
+                      ],
+                    ),
+                  ),
+                );
+              }
+            },
+          );
+        },
       ),
     );
+  }
+  void _removeFromFavorites(DocumentReference documentReference) {
+    documentReference.delete().then((value) {
+      Fluttertoast.showToast(msg: 'Product removed from Cart');
+    }).catchError((error) {
+      print('Failed to remove product: $error');
+    });
   }
 }
